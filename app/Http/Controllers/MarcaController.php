@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Marca;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\AcceptHeader;
 
 class MarcaController extends Controller
 {
@@ -23,7 +24,7 @@ class MarcaController extends Controller
     {
         //$marcas = Marca::all();
         $marcas = $this->marca->all();
-        return $marcas;
+        return response()->json($marcas, 200);
     }
 
     /**
@@ -46,8 +47,28 @@ class MarcaController extends Controller
     {
         //
         //$marca = Marca::create($request->all());
+//        $regras = [
+//            'nome' => 'required|unique:marcas',
+//            'imagem' => 'required'
+//        ];
+//
+//        $feedback = [
+//            'required' => 'O campo :attribute é obrigatório',
+//            'nome.unique' => 'O nome da marca já existe'
+//        ];
+
+        //$request->validate($regras, $feedback);
+        $request->validate($this->marca->rules(), $this->marca->feedback());
+
+        //stateless
+
+        //dd(request->nome);
+        //dd(request->get('nome');
+       //dd(request->input('nome');
+
+
         $marca = $this->marca->create($request->all());
-        return $marca;
+        return response()->json($marca, 201);
     }
 
     /**
@@ -60,7 +81,10 @@ class MarcaController extends Controller
     {
         //
         $marca = $this->marca->find($id);
-        return $marca;
+        if($marca === null){
+            return response()->json(['erro' => 'Recurso pesquisado não existe'], 404); //
+        }
+        return response()->json($marca, 200);
     }
 
     /**
@@ -86,8 +110,32 @@ class MarcaController extends Controller
         //
 
         $marca = $this->marca->find($id);
+
+        if($marca === null){
+            return response()->json(['erro' => 'Recurso pesquisado não existe, impossivel realizar a atualizacão!'], 404);
+        }
+
+        if($request->method() === 'PATCH'){
+
+            $regrasDinamicas = array();
+
+            //precorrendo todas as regras definidas no model
+
+
+            foreach ($marca->rules() as $input => $regras){
+                //coletar apenas as regras aplicaveis aos parametros parciais da requisicao
+                if(array_key_exists($input, $request->all())) {
+                    $regrasDinamicas[$input] = $regras;
+                }
+            }
+
+        }else{
+            $request->validate($marca->rules(), $marca->feedback());
+        }
+
+
         $marca->update($request->all());
-        return $marca;
+        return response()->json($marca, 200);
     }
 
     /**
@@ -100,7 +148,12 @@ class MarcaController extends Controller
     {
         //
         $marca = $this->marca->find($id);
+
+        if($marca === null){
+            return response()->json(['erro' => 'o recurso pesquisado não existe, impossivel realizar a exclusão'], 404);
+        }
+
         $marca->delete();
-        return ['msg' => 'A marca foi removida com sucesso!'];
+        return response()->json(['msg' => 'A marca foi removida com sucesso!'], 200);
     }
 }
