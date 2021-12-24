@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Marca;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\AcceptHeader;
 
 class MarcaController extends Controller
@@ -23,7 +24,8 @@ class MarcaController extends Controller
     public function index()
     {
         //$marcas = Marca::all();
-        $marcas = $this->marca->all();
+        //$marcas = $this->marca->all();
+        $marcas = $this->marca->with('modelos')->get();
         return response()->json($marcas, 200);
     }
 
@@ -66,8 +68,23 @@ class MarcaController extends Controller
         //dd(request->get('nome');
        //dd(request->input('nome');
 
+        //amarzenando a imagem
+        $imagem = $request->file('imagem');
+        $imagem_urn = $imagem->store('imagens', 'public');
 
-        $marca = $this->marca->create($request->all());
+        //dd($imagem_urn);
+
+
+
+        $marca = $this->marca->create([
+            'nome' => $request->nome,
+            'imagem' => $imagem_urn
+        ]);
+        //OU
+//        $marca->nome = $request->nome;
+//        $marca->imagem = $imagem_urn;
+//        $marca->save();
+
         return response()->json($marca, 201);
     }
 
@@ -80,7 +97,7 @@ class MarcaController extends Controller
     public function show($id)
     {
         //
-        $marca = $this->marca->find($id);
+        $marca = $this->marca->with('modelos')->find($id);
         if($marca === null){
             return response()->json(['erro' => 'Recurso pesquisado não existe'], 404); //
         }
@@ -133,8 +150,32 @@ class MarcaController extends Controller
             $request->validate($marca->rules(), $marca->feedback());
         }
 
+        //remove o arquivo antigo com o Facedes\Storage
+        if($request->file('imagem')) {
+            Storage::disk('public')->delete($marca->imagem);
+        }
 
-        $marca->update($request->all());
+        //amarzenando a imagem
+        $imagem = $request->file('imagem');
+        $imagem_urn = $imagem->store('imagens', 'public');
+
+        //dd($imagem_urn);
+
+        //preencher o objeto $marca com os dados do request
+        $marca->fill($request->all());
+        $marca->imagem = $imagem_urn;
+
+
+        /**
+        $marca->update([
+            'nome' => $request->nome,
+            'imagem' => $imagem_urn
+        ]);
+         * */
+
+        //ULTILIZANDO O METHOD SAVE
+        $marca->save();
+
         return response()->json($marca, 200);
     }
 
@@ -152,6 +193,11 @@ class MarcaController extends Controller
         if($marca === null){
             return response()->json(['erro' => 'o recurso pesquisado não existe, impossivel realizar a exclusão'], 404);
         }
+
+        //remove o arquivo antigo com o Facedes\Storage
+        Storage::disk('public')->delete($marca->imagem);
+
+
 
         $marca->delete();
         return response()->json(['msg' => 'A marca foi removida com sucesso!'], 200);
