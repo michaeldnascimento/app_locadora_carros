@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modelo;
+use App\Repositories\ModeloRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\AcceptHeader;
@@ -24,6 +25,29 @@ class ModeloController extends Controller
     public function index(Request $request)
     {
 
+        //-----------MODELO ULTILIZANDO O REPOSITORY
+        $modeloRepository = new ModeloRepository($this->modelo);
+
+        //RECUPERANDO OS ATRIOBUTOS Modelos
+        if($request->has('atributos_marca')){
+            $atributos_marca = 'marca:id,'.$request->atributos_marca;
+            $modeloRepository->selectAtributosRegistrosRelacionados($atributos_marca);
+        } else {
+            $modeloRepository->selectAtributosRegistrosRelacionados('marca');
+        }
+
+        if($request->has('filtro')) {
+            $modeloRepository->filtro($request->filtro);
+        }
+
+        //recuperando os atributos
+        if($request->has('atributos')){
+            $modeloRepository->selectAtributos($request->atributos);
+        }
+
+        return response()->json($modeloRepository->getResultado(), 200);
+
+        /** ------------------MODELO PADRÃO----------------------------------------------
         $modelos = array();
 
         //RECUPERANDO OS ATRIOBUTOS MARCA
@@ -60,6 +84,8 @@ class ModeloController extends Controller
         //get() -> modificar a consulta -> collection
         //$modelo = $this->modelo->with('marca')->get();
         return response()->json($modelos, 200);
+         *
+         */
     }
 
     /**
