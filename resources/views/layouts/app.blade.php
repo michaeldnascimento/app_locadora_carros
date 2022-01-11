@@ -33,7 +33,24 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
+                        @auth
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Clientes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Locações</a>
+                            </li>
 
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#"  data-bs-toggle="dropdown">Veículos</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#">Carros</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{ route('marcas') }}">Marcas</a>
+                                    <a class="dropdown-item" href="#">Modelos</a>
+                                </div>
+                            </li>
+                        @endauth
                     </ul>
 
                     <!-- Right Side Of Navbar -->
@@ -74,6 +91,17 @@
                 </div>
             </div>
         </nav>
+
+
+        <!-- inclusa do breadcrump -->
+        @auth
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{route('home')}}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{Route::currentRouteName()}}</li>
+            </ol>
+        </nav>
+        @endauth
 
         <main class="py-4">
             @yield('content')
